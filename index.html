@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Idiom Origins Checker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #FF0000 0%, #ffffff 50%, #FF0000 100%);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        #phraseInput {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #phraseInput:focus {
+            border-color: #FF0000;
+        }
+
+        .made-in-canada {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #FF0000;
+            padding: 8px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border: 1px solid #FF0000;
+        }
+
+        #checkBtn {
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #FF0000, #CC0000);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        #checkBtn:hover {
+            transform: translateY(-2px);
+        }
+
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 20px;
+            border-left: 5px solid;
+            display: none;
+        }
+
+        .result-card.yes {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+
+        .result-card.maybe {
+            border-left-color: #ffc107;
+            background: #fffef5;
+        }
+
+        .result-card.no {
+            border-left-color: #28a745;
+            background: #f5fff5;
+        }
+
+        .verdict {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .verdict.yes { color: #dc3545; }
+        .verdict.maybe { color: #856404; }
+        .verdict.no { color: #28a745; }
+
+        .explanation {
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .alternatives {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .alternatives h4 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+
+        .alt-phrases {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .alt-phrase {
+            background: #6c757d;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+        }
+
+        .sources {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        .not-found {
+            text-align: center;
+            color: #6c757d;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .submit-btn {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Idiom Origins Checker</h1>
+        <p class="subtitle">Check if common phrases and idioms have problematic origins</p>
+        
+        <div class="search-box">
+            <input type="text" id="phraseInput" placeholder="Enter a phrase or idiom (e.g., 'cakewalk', 'peanut gallery')">
+            <button id="checkBtn" onclick="checkPhrase()">Check Origins</button>
+        </div>
+
+        <div id="result"></div>
+        
+        <div class="made-in-canada">Made in Canada</div>
+    </div>
+
+    <script>
+        // Sample idiom database - will be replaced with DynamoDB later
+        const idioms = {
+            "cakewalk": {
+                "phrase": "cakewalk",
+                "verdict": "Yes",
+                "flag": "✅",
+                "explanation": "The term 'cakewalk' originated from racist minstrel shows where enslaved Black people performed a dance for white audiences, often competing for a cake as a prize. The dance was meant to mock white people's dancing styles, but plantation owners interpreted it as enslaved people trying unsuccessfully to imitate them.",
+                "alternatives": ["walk in the park", "easy task", "simple job", "piece of cake"],
+                "sources": ["https://www.smithsonianmag.com/arts-culture/cakewalk-the-story-of-americas-most-shameful-dance-7492.html"]
+            },
+            "peanut gallery": {
+                "phrase": "peanut gallery",
+                "verdict": "Yes", 
+                "flag": "✅",
+                "explanation": "This term referred to the cheapest theater seats, often in the balcony, where Black theatergoers were segregated during the Vaudeville era. The phrase became associated with unwanted criticism from people considered 'lower class' or less informed.",
+                "alternatives": ["hecklers", "critics", "cheap seats", "back row"],
+                "sources": ["https://www.merriam-webster.com/dictionary/peanut%20gallery"]
+            },
+            "sold down the river": {
+                "phrase": "sold down the river",
+                "verdict": "Yes",
+                "flag": "✅", 
+                "explanation": "This phrase literally described the practice of selling enslaved people from the upper South down the Mississippi or Ohio rivers to Deep South plantations, separating families and condemning people to harsher conditions.",
+                "alternatives": ["betrayed", "thrown under the bus", "backstabbed", "double-crossed"],
+                "sources": ["https://www.history.com/news/sold-down-the-river-slavery-origins"]
+            },
+            "rule of thumb": {
+                "phrase": "rule of thumb",
+                "verdict": "Maybe",
+                "flag": "⚠️",
+                "explanation": "Some claim this phrase originated from an old law allowing men to beat their wives with a stick no thicker than their thumb. However, historians debate this origin, and it may actually come from traditional measurement practices using the thumb.",
+                "alternatives": ["general guideline", "rough estimate", "common practice", "standard approach"],
+                "sources": ["https://www.snopes.com/fact-check/rule-of-thumb/"]
+            },
+            "gypped": {
+                "phrase": "gypped",
+                "verdict": "Yes",
+                "flag": "✅",
+                "explanation": "This term comes from 'Gypsy,' a derogatory name for the Romani people. It perpetuates harmful stereotypes about the Roma being thieves or dishonest, contributing to ongoing discrimination against this ethnic group.",
+                "alternatives": ["cheated", "ripped off", "shortchanged", "swindled"],
+                "sources": ["https://www.npr.org/sections/codeswitch/2013/12/30/242429836/why-being-gypped-hurts-the-roma-more-than-it-hurts-you"]
+            }
+        };
+
+        function checkPhrase() {
+            const input = document.getElementById('phraseInput');
+            const resultDiv = document.getElementById('result');
+            const phrase = input.value.toLowerCase().trim();
+
+            if (!phrase) {
+                alert('Please enter a phrase to check');
+                return;
+            }
+
+            const result = idioms[phrase];
+            
+            if (result) {
+                displayResult(result);
+            } else {
+                displayNotFound(phrase);
+            }
+        }
+
+        function displayResult(result) {
+            const resultDiv = document.getElementById('result');
+            const verdictClass = result.verdict.toLowerCase();
+            
+            resultDiv.innerHTML = `
+                <div class="result-card ${verdictClass}">
+                    <div class="verdict ${verdictClass}">
+                        ${result.flag} ${result.verdict === 'Yes' ? 'Problematic Origins' : result.verdict === 'Maybe' ? 'Disputed Origins' : 'Not Problematic'}
+                    </div>
+                    <div class="explanation">${result.explanation}</div>
+                    <div class="alternatives">
+                        <h4>Better alternatives:</h4>
+                        <div class="alt-phrases">
+                            ${result.alternatives.map(alt => `<span class="alt-phrase">${alt}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="sources">
+                        <strong>Sources:</strong> ${result.sources.map(source => `<a href="${source}" target="_blank">Learn more</a>`).join(', ')}
+                    </div>
+                </div>
+            `;
+            resultDiv.style.display = 'block';
+        }
+
+        function displayNotFound(phrase) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <div class="not-found">
+                    <h3>Phrase not found: "${phrase}"</h3>
+                    <p>We don't have information about this phrase yet.</p>
+                    <button class="submit-btn" onclick="submitPhrase('${phrase}')">Suggest this phrase for review</button>
+                </div>
+            `;
+            resultDiv.style.display = 'block';
+        }
+
+        function submitPhrase(phrase) {
+            // TODO: Connect to Lambda API later
+            alert(`Thanks! We'll review "${phrase}" and add it to our database.`);
+        }
+
+        // Allow Enter key to trigger search
+        document.getElementById('phraseInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkPhrase();
+            }
+        });
+    </script>
+</body>
+</html>
