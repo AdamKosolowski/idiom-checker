@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Idiom Checker - Admin Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #FF0000 0%, #ffffff 50%, #FF0000 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .admin-sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .section h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #FF0000;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #FF0000;
+        }
+
+        textarea {
+            height: 80px;
+            resize: vertical;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(45deg, #FF0000, #CC0000);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .current-items {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .item-row {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .item-row:last-child {
+            border-bottom: none;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-phrase {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .item-verdict {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .stats {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #FF0000;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Admin Portal</h1>
+        <p class="subtitle">Manage idioms and database content</p>
+
+        <div class="stats">
+            <div class="stat-number" id="totalCount">10</div>
+            <div>Total Idioms in Database</div>
+        </div>
+
+        <div id="successMessage" class="success-message"></div>
+        <div id="errorMessage" class="error-message"></div>
+
+        <div class="admin-sections">
+            <!-- Add New Idiom -->
+            <div class="section">
+                <h3>Add New Idiom</h3>
+                <form id="addIdiomForm">
+                    <div class="form-group">
+                        <label for="phrase">Phrase/Idiom:</label>
+                        <input type="text" id="phrase" placeholder="e.g., 'rule of thumb'" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="verdict">Verdict:</label>
+                        <select id="verdict" required>
+                            <option value="">Select verdict</option>
+                            <option value="problematic">Problematic</option>
+                            <option value="disputed">Disputed</option>
+                            <option value="acceptable">Acceptable</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="explanation">Historical Explanation:</label>
+                        <textarea id="explanation" placeholder="Explain the historical context and why this phrase is problematic..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="alternatives">Alternative Phrases (pipe-separated):</label>
+                        <input type="text" id="alternatives" placeholder="better option|good alternative|safer phrase" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sources">Sources (pipe-separated):</label>
+                        <input type="text" id="sources" placeholder="https://source1.com|Academic reference|Research paper" required>
+                    </div>
+
+                    <button type="submit" class="btn">Add Idiom</button>
+                </form>
+            </div>
+
+            <!-- Database Browser -->
+            <div class="section">
+                <h3>Current Database</h3>
+                <button class="btn" onclick="loadCurrentItems()" style="margin-bottom: 15px;">Refresh List</button>
+                <div id="currentItems" class="current-items">
+                    <div class="loading">Click "Refresh List" to load current idioms</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Research Helper Section -->
+        <div class="section">
+            <h3>Research Assistant</h3>
+            <p style="margin-bottom: 15px; color: #666;">
+                Use this to research new idioms. This will help you find historical context and suggest content for the form above.
+            </p>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <input type="text" id="researchPhrase" placeholder="Enter phrase to research..." style="flex: 1;">
+                <button class="btn" onclick="researchPhrase()">Research</button>
+            </div>
+            <div id="researchResults" style="background: #f8f9fa; padding: 15px; border-radius: 8px; min-height: 100px;">
+                Research results will appear here...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Your Lambda URLs
+        const SEARCH_API_URL = 'https://4nkaasj2hjvcob7n2gxicerg7y0nhrqa.lambda-url.ca-central-1.on.aws/';
+        const ADMIN_API_URL = 'YOUR_ADMIN_LAMBDA_URL_HERE'; // We'll build this next
+
+        // Add new idiom
+        document.getElementById('addIdiomForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                phrase: document.getElementById('phrase').value.toLowerCase().trim(),
+                verdict: document.getElementById('verdict').value,
+                explanation: document.getElementById('explanation').value,
+                alternatives: document.getElementById('alternatives').value,
+                sources: document.getElementById('sources').value
+            };
+
+            try {
+                showMessage('Adding idiom...', 'success');
+                
+                // TODO: Call admin Lambda function to add item
+                // For now, just show success
+                showMessage(`Idiom "${formData.phrase}" added successfully!`, 'success');
+                document.getElementById('addIdiomForm').reset();
+                
+                // Refresh the list
+                loadCurrentItems();
+                
+            } catch (error) {
+                showMessage(`Failed to add idiom: ${error.message}`, 'error');
+            }
+        });
+
+        // Load current items from database
+        async function loadCurrentItems() {
+            const container = document.getElementById('currentItems');
+            container.innerHTML = '<div class="loading">Loading current idioms...</div>';
+
+            try {
+                // For now, show the 10 we know about
+                const knownItems = [
+                    'cakewalk', 'sold down the river', 'peanut gallery', 
+                    'grandfathered in', 'gypped', 'long time no see',
+                    'spirit animal', 'powwow', 'bottom of the totem pole', 'indian giver'
+                ];
+
+                let html = '';
+                for (let phrase of knownItems) {
+                    html += `
+                        <div class="item-row">
+                            <div class="item-info">
+                                <div class="item-phrase">${phrase}</div>
+                                <div class="item-verdict">problematic</div>
+                            </div>
+                            <div class="item-actions">
+                                <button class="btn btn-sm btn-warning" onclick="editItem('${phrase}')">Edit</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteItem('${phrase}')">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                container.innerHTML = html;
+                document.getElementById('totalCount').textContent = knownItems.length;
+
+            } catch (error) {
+                container.innerHTML = `<div class="error">Failed to load items: ${error.message}</div>`;
+            }
+        }
+
+        // Research helper (placeholder for Bedrock integration)
+        async function researchPhrase() {
+            const phrase = document.getElementById('researchPhrase').value.trim();
+            const resultsDiv = document.getElementById('researchResults');
+            
+            if (!phrase) {
+                resultsDiv.innerHTML = 'Please enter a phrase to research.';
+                return;
+            }
+
+            resultsDiv.innerHTML = 'Researching historical context for "' + phrase + '"...';
+            
+            // TODO: Integrate with Bedrock to research phrase origins
+            setTimeout(() => {
+                resultsDiv.innerHTML = `
+                    <h4>Research for "${phrase}":</h4>
+                    <p><strong>Status:</strong> Ready for Bedrock integration</p>
+                    <p><strong>Next:</strong> This will use AWS Bedrock to research historical origins, suggest alternatives, and draft explanations.</p>
+                    <p><strong>Manual research needed for now.</strong></p>
+                `;
+            }, 1000);
+        }
+
+        // Placeholder functions for future features
+        function editItem(phrase) {
+            alert(`Edit functionality for "${phrase}" - coming soon!`);
+        }
+
+        function deleteItem(phrase) {
+            if (confirm(`Delete "${phrase}" from database?`)) {
+                alert(`Delete functionality for "${phrase}" - coming soon!`);
+            }
+        }
+
+        function showMessage(message, type) {
+            const successDiv = document.getElementById('successMessage');
+            const errorDiv = document.getElementById('errorMessage');
+            
+            if (type === 'success') {
+                successDiv.textContent = message;
+                successDiv.style.display = 'block';
+                errorDiv.style.display = 'none';
+            } else {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+                successDiv.style.display = 'none';
+            }
+
+            // Hide after 3 seconds
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+                errorDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Load items on page load
+        window.addEventListener('load', loadCurrentItems);
+    </script>
+</body>
+</html>
